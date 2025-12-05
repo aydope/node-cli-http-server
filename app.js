@@ -1,47 +1,59 @@
 import { createInterface } from "readline";
-import { stdout as output, stdin as input } from "process";
+import { stdout, stdin } from "process";
 import { createServer } from "http";
 import { EventEmitter } from "events";
 
+const rl = createInterface({ input: stdin, output: stdout });
+
+let server = null;
+const createNewServer = (message = "Hello World!") => {
+  return createServer((req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ message }));
+  });
+};
+
+server = createNewServer();
+
 const emitter = new EventEmitter();
 
-emitter.on("startServer", () => {
+const askQuestion = (query) => {
+  return new Promise((resolve) => {
+    rl.question(query, resolve);
+  });
+};
+
+const startServer = async () => {
   if (server.listening) {
     console.log("The server is already active.");
-    question("Enter your next command: ");
     return;
   }
-  server.listen(3000, () => {
+  server.listen(3000, async () => {
     console.log(`The server is now running on port ${server.address().port}`);
-    question("Enter your next command: ");
+    chunks = await askQuestion("Enter your next command: ");
   });
+};
 
-  return;
-});
-
-emitter.on("stopServer", () => {
+const stopServer = async () => {
   if (!server.listening) {
     console.log("The server is currently not active.");
-    question("Enter your next command: ");
     return;
   }
 
   console.log("Shutting down server...");
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
       console.log(err);
       return;
     }
     console.log("Server has been successfully stopped.");
-    question("Enter your next command: ");
+    chunks = await askQuestion("Enter your next command: ");
   });
-  return;
-});
+};
 
-emitter.on("restartServer", () => {
+const restartServer = async () => {
   if (!server.listening) {
-    console.log("Server has been successfully stopped.");
-    question("Enter your next command: ");
+    console.log("The server is currently not active.");
     return;
   }
 
@@ -52,72 +64,59 @@ emitter.on("restartServer", () => {
       return;
     }
 
+    server = createNewServer("New message!");
+
     console.log("Server has been stopped.");
     console.log("Reinitializing server...");
-    server.listen(3000, () => {
+    server.listen(3000, async () => {
       console.log(
         `Server restarted and running on port ${server.address().port}`
       );
-      question("Provide your next command: ");
+      chunks = await askQuestion("Provide your next command: ");
     });
   });
-  return;
-});
-
-emitter.on("closeReadLine", () => {
-  rl.close();
-  return;
-});
-
-const rl = createInterface({ input, output });
-const server = createServer((req, res) => {
-  res.writeHead(200, { "content-type": "application/json" });
-  res.end({
-    message: "Hello, world!",
-  });
-});
-
-const question = (query) => {
-  rl.setPrompt(query);
-  rl.prompt();
 };
 
-question("Enter a command to execute: ");
+const closeReadLine = () => rl.close();
 
-rl.on("line", (chunks) => {
-  if (chunks === "exit") {
-    emitter.emit("closeRL");
-    return;
-  }
+emitter.on("startServer", startServer);
+emitter.on("stopServer", stopServer);
+emitter.on("restartServer", restartServer);
+emitter.on("closeReadLine", closeReadLine);
 
-  if (chunks === "start") {
-    emitter.emit("startServer");
-    return;
-  }
+const main = async () => {
+  let chunks = await askQuestion("Enter a command to execute: ");
 
-  if (chunks === "stop") {
-    emitter.emit("stopServer");
-    return;
-  }
-
-  if (chunks === "restart") {
-    emitter.emit("restartServer");
-    return;
-  }
-
-  try {
-    const executable = eval(chunks);
-    if (executable || [0, NaN, undefined, null].includes(executable)) {
-      console.log(`${chunks}: ${executable}`);
+  while (chunks !== "exit") {
+    switch (chunks) {
+      case "start":
+        emitter.emit("startServer");
+        break;
+      case "stop":
+        emitter.emit("stopServer");
+        break;
+      case "restart":
+        emitter.emit("restartServer");
+        break;
+      default:
+        try {
+          const executable = eval(chunks);
+          if (executable || [0, NaN, undefined, null].includes(executable)) {
+            console.log(`${chunks}: ${executable}`);
+          }
+        } catch (error) {
+          console.log(`Error: ${error.message}`);
+          chunks = await askQuestion("Provide your next command: ");
+        }
+        break;
     }
-  } catch (error) {
-    console.log(`Error: ${error.message}`);
-    question("Provide your next command: ");
+
+    chunks = await askQuestion("Provide your next command: ");
   }
 
-  question("Provide your next command: ");
-});
+  emitter.emit("closeReadLine");
+};
 
-rl.on("close", () => {
-  console.log("Exiting...");
-});
+rl.on("close", () => console.log("Exiting..."));
+
+main();
