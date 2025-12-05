@@ -23,6 +23,8 @@ const askQuestion = (query) => {
   });
 };
 
+let chunks = await askQuestion("Enter a command to execute: ");
+
 const startServer = async () => {
   if (server.listening) {
     console.log("The server is already active.");
@@ -84,39 +86,33 @@ emitter.on("stopServer", stopServer);
 emitter.on("restartServer", restartServer);
 emitter.on("closeReadLine", closeReadLine);
 
-const main = async () => {
-  let chunks = await askQuestion("Enter a command to execute: ");
-
-  while (chunks !== "exit") {
-    switch (chunks) {
-      case "start":
-        emitter.emit("startServer");
-        break;
-      case "stop":
-        emitter.emit("stopServer");
-        break;
-      case "restart":
-        emitter.emit("restartServer");
-        break;
-      default:
-        try {
-          const executable = eval(chunks);
-          if (executable || [0, NaN, undefined, null].includes(executable)) {
-            console.log(`${chunks}: ${executable}`);
-          }
-        } catch (error) {
-          console.log(`Error: ${error.message}`);
-          chunks = await askQuestion("Provide your next command: ");
+while (chunks !== "exit") {
+  switch (chunks) {
+    case "start":
+      emitter.emit("startServer");
+      break;
+    case "stop":
+      emitter.emit("stopServer");
+      break;
+    case "restart":
+      emitter.emit("restartServer");
+      break;
+    default:
+      try {
+        const executable = eval(chunks);
+        if (executable || [0, NaN, undefined, null].includes(executable)) {
+          console.log(`${chunks}: ${executable}`);
         }
-        break;
-    }
-
-    chunks = await askQuestion("Provide your next command: ");
+      } catch (error) {
+        console.log(`Error: ${error.message}`);
+        chunks = await askQuestion("Provide your next command: ");
+      }
+      break;
   }
 
-  emitter.emit("closeReadLine");
-};
+  chunks = await askQuestion("Provide your next command: ");
+}
+
+emitter.emit("closeReadLine");
 
 rl.on("close", () => console.log("Exiting..."));
-
-main();
