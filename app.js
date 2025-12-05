@@ -3,6 +3,18 @@ import { stdout as output, stdin as input } from "process";
 import { createServer } from "http";
 import { EventEmitter } from "events";
 
+let server = null;
+
+const rl = createInterface({ input, output });
+const createNewServer = (message = "Hello World!") => {
+  return createServer((req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ message }));
+  });
+};
+
+server = createNewServer();
+
 const emitter = new EventEmitter();
 
 emitter.on("startServer", () => {
@@ -52,6 +64,8 @@ emitter.on("restartServer", () => {
       return;
     }
 
+    server = createNewServer("Server restarted with updated content!");
+
     console.log("Server has been stopped.");
     console.log("Reinitializing server...");
     server.listen(3000, () => {
@@ -69,14 +83,6 @@ emitter.on("closeReadLine", () => {
   return;
 });
 
-const rl = createInterface({ input, output });
-const server = createServer((req, res) => {
-  res.writeHead(200, { "content-type": "application/json" });
-  res.end({
-    message: "Hello, world!",
-  });
-});
-
 const question = (query) => {
   rl.setPrompt(query);
   rl.prompt();
@@ -86,7 +92,7 @@ question("Enter a command to execute: ");
 
 rl.on("line", (chunks) => {
   if (chunks === "exit") {
-    emitter.emit("closeRL");
+    emitter.emit("closeReadLine");
     return;
   }
 
