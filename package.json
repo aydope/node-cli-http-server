@@ -1,0 +1,12 @@
+{
+  "name": "node-cli-http-server",
+  "version": "1.0.0",
+  "description": "A minimal interactive Node.js script for starting, stopping, and restarting an HTTP server via CLI commands.",
+  "license": "MIT",
+  "author": "Aydope",
+  "type": "module",
+  "main": "src/app.js",
+  "scripts": {
+    "node": "src/app.js"
+  }
+}
