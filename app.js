@@ -1,118 +1,146 @@
 import { createInterface } from "readline";
-import { stdout, stdin } from "process";
+import { stdin, stdout } from "process";
 import { createServer } from "http";
-import { EventEmitter } from "events";
 
-const rl = createInterface({ input: stdin, output: stdout });
+/**
+ * CLI-based HTTP server controller.
+ * Developed by https://github.com/aydope
+ */
+class ServerController {
+  /** @type {import("readline").Interface} */
+  #readline;
 
-let server = null;
-const createNewServer = (message = "Hello World!") => {
-  return createServer((req, res) => {
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ message }));
-  });
-};
+  /** @type {import("http").Server|null} */
+  #httpServer = null;
 
-server = createNewServer();
+  /** @type {number} */
+  #port = 3000;
 
-const emitter = new EventEmitter();
+  constructor() {
+    this.#readline = createInterface({ input: stdin, output: stdout });
 
-const askQuestion = (query) => {
-  return new Promise((resolve) => {
-    rl.question(query, resolve);
-  });
-};
-
-let chunks = await askQuestion("Enter a command to execute: ");
-
-const startServer = async () => {
-  if (server.listening) {
-    console.log("The server is already active.");
-    return;
-  }
-  server.listen(3000, async () => {
-    console.log(`The server is now running on port ${server.address().port}`);
-    chunks = await askQuestion("Enter your next command: ");
-  });
-};
-
-const stopServer = async () => {
-  if (!server.listening) {
-    console.log("The server is currently not active.");
-    return;
-  }
-
-  console.log("Shutting down server...");
-  server.close(async (err) => {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    console.log("Server has been successfully stopped.");
-    chunks = await askQuestion("Enter your next command: ");
-  });
-};
-
-const restartServer = async () => {
-  if (!server.listening) {
-    console.log("The server is currently not active.");
-    return;
-  }
-
-  console.log("Shutting down the server...");
-  server.close((err) => {
-    if (err) {
-      console.log(err);
-      return;
-    }
-
-    server = createNewServer("New message!");
-
-    console.log("Server has been stopped.");
-    console.log("Reinitializing server...");
-    server.listen(3000, async () => {
-      console.log(
-        `Server restarted and running on port ${server.address().port}`
-      );
-      chunks = await askQuestion("Provide your next command: ");
+    // Handle readline close inside class
+    this.#readline.on("close", () => {
+      console.log("Exiting CLI...");
     });
-  });
-};
-
-const closeReadLine = () => rl.close();
-
-emitter.on("startServer", startServer);
-emitter.on("stopServer", stopServer);
-emitter.on("restartServer", restartServer);
-emitter.on("closeReadLine", closeReadLine);
-
-while (chunks !== "exit") {
-  switch (chunks) {
-    case "start":
-      emitter.emit("startServer");
-      break;
-    case "stop":
-      emitter.emit("stopServer");
-      break;
-    case "restart":
-      emitter.emit("restartServer");
-      break;
-    default:
-      try {
-        const executable = eval(chunks);
-        if (executable || [0, NaN, undefined, null].includes(executable)) {
-          console.log(`${chunks}: ${executable}`);
-        }
-      } catch (error) {
-        console.log(`Error: ${error.message}`);
-        chunks = await askQuestion("Provide your next command: ");
-      }
-      break;
   }
 
-  chunks = await askQuestion("Provide your next command: ");
+  /**
+   * Prompt the user and get input.
+   * @param {string} promptMessage - Message to show in CLI
+   * @returns {Promise<string>} User input
+   */
+  #prompt(promptMessage) {
+    return new Promise((resolve) =>
+      this.#readline.question(promptMessage, resolve)
+    );
+  }
+
+  /**
+   * Create a new HTTP server.
+   * @param {string} responseMessage - Message to respond with
+   * @returns {import("http").Server}
+   */
+  #createHttpServer(responseMessage = "Hello World!") {
+    return createServer((req, res) => {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: responseMessage }));
+    });
+  }
+
+  /**
+   * Start the HTTP server.
+   */
+  async startServer() {
+    if (this.#httpServer?.listening) {
+      console.log("Server is already running.");
+      return;
+    }
+
+    this.#httpServer = this.#httpServer || this.#createHttpServer();
+    await new Promise((resolve, reject) => {
+      this.#httpServer.listen(this.#port, () => {
+        console.log(`Server started successfully on port ${this.#port}.`);
+        resolve();
+      });
+      this.#httpServer.on("error", reject);
+    });
+  }
+
+  /**
+   * Stop the HTTP server.
+   */
+  async stopServer() {
+    if (!this.#httpServer?.listening) {
+      console.log("Server is not running.");
+      return;
+    }
+
+    console.log("Stopping server...");
+    await new Promise((resolve, reject) => {
+      this.#httpServer.close((err) => {
+        if (err) return reject(err);
+        console.log("Server stopped successfully.");
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * Restart the HTTP server.
+   */
+  async restartServer() {
+    if (!this.#httpServer?.listening) {
+      console.log("Server is not running. Please start it first.");
+      return;
+    }
+
+    console.log("Restarting server...");
+    await this.stopServer();
+    this.#httpServer = this.#createHttpServer("Server restarted successfully!");
+    await this.startServer();
+  }
+
+  /**
+   * Close the CLI interface.
+   */
+  closeCLI() {
+    this.#readline.close();
+  }
+
+  /**
+   * Run the main CLI loop.
+   */
+  async runCLI() {
+    let userInput = await this.#prompt(
+      "Enter a command (start, stop, restart, exit): "
+    );
+
+    while (userInput.trim().toLowerCase() !== "exit") {
+      switch (userInput.trim().toLowerCase()) {
+        case "start":
+          await this.startServer();
+          break;
+        case "stop":
+          await this.stopServer();
+          break;
+        case "restart":
+          await this.restartServer();
+          break;
+        default:
+          console.log(
+            "Invalid command. Available commands: start, stop, restart, exit."
+          );
+          break;
+      }
+
+      userInput = await this.#prompt("Enter your next command: ");
+    }
+
+    this.closeCLI();
+  }
 }
 
-emitter.emit("closeReadLine");
-
-rl.on("close", () => console.log("Exiting..."));
+// Initialize and start CLI server controller
+const serverController = new ServerController();
+serverController.runCLI();
