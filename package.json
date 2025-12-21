@@ -5,8 +5,8 @@
   "license": "MIT",
   "author": "Aydope",
   "type": "module",
-  "main": "./app.js",
+  "main": "src/app.js",
   "scripts": {
-    "node": "./app.js"
+    "node": "src/app.js"
   }
 }
