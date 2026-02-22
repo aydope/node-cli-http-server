@@ -14,6 +14,6 @@ A clean and simple CLI tool to start, stop, and restart an HTTP server using Nod
 1. Clone the repository:
 
 ```bash
-git clone <repo-url>
-cd <repo-folder>
+git clone https://github.com/aydope/node-cli-http-server.git
+cd node-cli-http-server
 ```
