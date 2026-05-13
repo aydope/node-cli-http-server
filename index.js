@@ -169,7 +169,7 @@ class StaticFileServer {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>File Explorer - ${this.#escapeHtml(currentPath || 'This PC')}</title>
+        <title>Peek File Explorer - ${this.#escapeHtml(currentPath || 'This PC')}</title>
         <style>
           * {
             margin: 0;
@@ -594,7 +594,7 @@ class StaticFileServer {
             <svg viewBox="0 0 24 24" fill="#0078d4">
               <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
             </svg>
-            File Explorer
+            Peek File Explorer
           </h1>
           <div class="window-controls">
             <button class="window-btn" onclick="window.location.reload()">🔄</button>
