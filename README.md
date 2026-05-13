@@ -1,3 +1,5 @@
+# Peek
+
 A powerful static file server with Windows 11 style file manager interface. Built with Node.js, this tool allows you to serve static files and manage them through a beautiful web-based file explorer.
 
 ## Features
@@ -26,10 +28,74 @@ cd Peek
 npm install
 ```
 
-## Required Dependencies
+### Install Dependencies
 
 ```bash
 npm install commander chalk clipboardy ora
+```
+
+## Global CLI Tool Installation
+
+You can install Peek globally to use it as a command-line tool from anywhere.
+
+### Global Installation
+
+```bash
+npm install -g .
+```
+
+Or if publishing to npm:
+
+```bash
+npm install -g peek
+```
+
+### After Global Installation
+
+```bash
+# Start the server
+peek start --port 3000 --dir ./myfiles
+
+# Start in CLI mode
+peek cli
+
+# Start with custom options
+peek start --port 8080 --dir ./public
+
+# Show help
+peek --help
+```
+
+### Using npx (without installation)
+
+Run directly without installing:
+
+```bash
+npx peek start
+npx peek start --port 8080
+npx peek cli
+```
+
+### Local Development Link
+
+For development, create a symlink globally:
+
+```bash
+npm link
+```
+
+Then use the command:
+
+```bash
+peek start
+```
+
+### Uninstall
+
+To remove the global installation:
+
+```bash
+npm uninstall -g peek
 ```
 
 ## Usage
@@ -281,6 +347,19 @@ The UI HTML/CSS is generated in the `#generateWindows11Explorer` method. You can
 - Firefox (latest)
 - Edge (latest)
 - Safari (latest)
+
+## Package.json Scripts
+
+```bash
+{
+  "scripts": {
+    "start": "node index.js start",
+    "cli": "node index.js cli",
+    "dev": "node index.js start --port 3000",
+    "help": "node index.js --help"
+  }
+}
+```
 
 ## License
 
