@@ -1,12 +1,46 @@
 {
-  "name": "node-cli-http-server",
+  "name": "Peek",
   "version": "1.0.0",
-  "description": "A minimal interactive Node.js script for starting, stopping, and restarting an HTTP server via CLI commands.",
+  "description": "Windows 11 style file explorer server with full file management capabilities via CLI and web interface",
   "license": "MIT",
   "author": "Aydope",
   "type": "module",
-  "main": "src/app.js",
+  "main": "index.js",
+  "bin": {
+    "peek": "./index.js",
+    "peek-server": "./index.js"
+  },
   "scripts": {
-    "start": "node src/app.js"
-  }
+    "start": "node index.js start",
+    "cli": "node index.js cli",
+    "dev": "node index.js start --port 3000",
+    "help": "node index.js --help"
+  },
+  "keywords": [
+    "file-explorer",
+    "static-server",
+    "http-server",
+    "file-manager",
+    "windows-11",
+    "cli",
+    "nodejs",
+    "peek"
+  ],
+  "dependencies": {
+    "commander": "^11.0.0",
+    "chalk": "^5.3.0",
+    "clipboardy": "^4.0.0",
+    "ora": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aydope/peek.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aydope/peek/issues"
+  },
+  "homepage": "https://github.com/aydope/peek#readme"
 }
